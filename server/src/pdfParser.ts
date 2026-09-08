@@ -119,8 +119,12 @@ export async function processDocument(documentId: string) {
 
     // Set back to pending extraction
     db.prepare('UPDATE documents SET status = ? WHERE id = ?').run('pending_extraction', documentId);
-    console.log(`Document ${documentId} parsed successfully.`);
+    console.log(`Document ${documentId} parsed successfully. Starting extraction...`);
     
+    // Auto-trigger extraction pipeline
+    // using dynamic import or require to avoid circular dependencies if any
+    const { extractFactsForDocument } = require('./extractor');
+    extractFactsForDocument(documentId).catch(console.error);
   } catch (error) {
     console.error(`Failed to parse document ${documentId}:`, error);
     db.prepare('UPDATE documents SET status = ? WHERE id = ?').run('error', documentId);

@@ -38,7 +38,7 @@ export async function judgeRelationship(factA: any, factB: any): Promise<any> {
         { role: 'system', content: JUDGE_PROMPT },
         { role: 'user', content }
       ],
-      model: 'llama-3.1-8b-instant',
+      model: 'groq/compound',
       temperature: 0,
       response_format: { type: 'json_object' }
     });
@@ -65,11 +65,14 @@ export async function judgeRelationship(factA: any, factB: any): Promise<any> {
 }
 
 export async function processCandidatePairs(candidates: { factA: any, factB: any }[]) {
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
   for (const pair of candidates) {
     // Check if relationship already exists
     const existing = db.prepare('SELECT id FROM relationships WHERE (fact_id_a = ? AND fact_id_b = ?) OR (fact_id_a = ? AND fact_id_b = ?)').get(pair.factA.id, pair.factB.id, pair.factB.id, pair.factA.id);
     if (existing) continue;
 
+    await sleep(2000); // 2s delay
     const judgment = await judgeRelationship(pair.factA, pair.factB);
     if (!judgment || !judgment.relationship) continue;
 

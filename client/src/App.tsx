@@ -1,18 +1,55 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import './index.css';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Upload, Loader2 } from 'lucide-react';
 
 function App() {
   const [relationships, setRelationships] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchRelationships = () => {
     fetch('http://localhost:3001/api/relationships')
       .then(res => res.json())
       .then(data => setRelationships(data))
       .catch(err => console.error('Failed to load relationships:', err));
+  };
+
+  useEffect(() => {
+    fetchRelationships();
   }, []);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:3001/api/documents', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        alert('File uploaded and is processing! The pipeline takes a minute or two depending on length. The dashboard will automatically update once facts are extracted and judged.');
+        // Poll for updates every 10s
+        const interval = setInterval(fetchRelationships, 10000);
+        // Clear after 3 minutes just as a safety net
+        setTimeout(() => clearInterval(interval), 180000);
+      } else {
+        alert('Upload failed.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const filteredRelationships = relationships.filter(rel => {
     const matchesSearch = (rel.a_subject?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
@@ -26,6 +63,35 @@ function App() {
     <div className="app-container">
       <header className="header">
         <h1>Fact Knowledge Layer</h1>
+        <div>
+          <input 
+            type="file" 
+            accept="application/pdf" 
+            style={{ display: 'none' }} 
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: 'var(--text-primary)',
+              color: 'var(--bg-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              fontWeight: 500,
+              fontSize: '0.9rem'
+            }}
+          >
+            {isUploading ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}
+            {isUploading ? 'Processing...' : 'Upload PDF'}
+          </button>
+        </div>
       </header>
 
       <main className="main-content">

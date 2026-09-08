@@ -43,7 +43,7 @@ export async function extractFactsFromChunk(chunkText: string): Promise<any[]> {
         { role: 'system', content: EXTRACTION_PROMPT },
         { role: 'user', content }
       ],
-      model: 'llama-3.1-8b-instant',
+      model: 'groq/compound',
       temperature: 0,
       response_format: { type: 'json_object' } // Groq requires 'json_object' type to output JSON, but it expects an object. Wait, if we ask for an array, it might fail. Let's ask for an object with a 'facts' array.
     });

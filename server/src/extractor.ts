@@ -2,6 +2,10 @@ import { db } from './db';
 import { v4 as uuidv4 } from 'uuid';
 import { extractFactsFromChunk } from './llmClient';
 import { getEmbedding } from './embedding';
+import { findCandidatesForFact } from './retrieval';
+import { processCandidatePairs } from './judge';
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function extractFactsForDocument(documentId: string) {
   try {
@@ -13,6 +17,7 @@ export async function extractFactsForDocument(documentId: string) {
     for (const chunk of chunks) {
       if (chunk.raw_text.trim().length < 20) continue; // Skip very short chunks
 
+      await sleep(2000); // Wait 2s to avoid rate limits
       const facts = await extractFactsFromChunk(chunk.raw_text);
       if (!facts || facts.length === 0) continue;
 
@@ -89,6 +94,16 @@ export async function extractFactsForDocument(documentId: string) {
             `Confidence: ${fact.confidence}`,
             new Date().toISOString()
           );
+        }
+
+        // Run retrieval and judge for this new fact
+        const candidates = findCandidatesForFact(factId, 3);
+        if (candidates.length > 0) {
+          const pairs = candidates.map((c: any) => ({
+            factA: db.prepare('SELECT * FROM facts WHERE id = ?').get(factId),
+            factB: db.prepare('SELECT * FROM facts WHERE id = ?').get(c.id)
+          }));
+          await processCandidatePairs(pairs);
         }
       }
     }
