@@ -1,6 +1,7 @@
 import { db } from './db';
 import { v4 as uuidv4 } from 'uuid';
 import { extractFactsFromChunk } from './llmClient';
+import { getEmbedding } from './embedding';
 
 export async function extractFactsForDocument(documentId: string) {
   try {
@@ -42,9 +43,12 @@ export async function extractFactsForDocument(documentId: string) {
         // Ensure values are strings
         const valueStr = typeof fact.value === 'string' ? fact.value : JSON.stringify(fact.value);
         
+        const embeddingText = `${fact.subject || ''} ${fact.attribute || ''} ${fact.raw_quote || ''}`.trim();
+        const embedding = await getEmbedding(embeddingText);
+        
         db.prepare(`
-          INSERT INTO facts (id, document_id, chunk_id, fact_type, subject, attribute, value, unit, time_scope, qualifiers, raw_quote, confidence, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO facts (id, document_id, chunk_id, fact_type, subject, attribute, value, unit, time_scope, qualifiers, raw_quote, confidence, embedding, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           factId,
           documentId,
@@ -58,6 +62,7 @@ export async function extractFactsForDocument(documentId: string) {
           fact.qualifiers ? JSON.stringify(fact.qualifiers) : null,
           fact.raw_quote || '',
           fact.confidence || 0.5,
+          Buffer.from(embedding.buffer),
           new Date().toISOString()
         );
 
