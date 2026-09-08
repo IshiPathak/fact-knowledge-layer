@@ -38,6 +38,31 @@ function setupMocks() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(fact2, doc2, chunk2, 'financial_metric', 'Company', 'consolidated revenue', '10', 'USD million', 'consolidated revenue hit $10 million', 0.95, now);
 
+  const fact3 = 'mock-fact-c';
+  const fact4 = 'mock-fact-d';
+  db.prepare(`
+    INSERT INTO facts (id, document_id, chunk_id, fact_type, subject, attribute, value, unit, raw_quote, confidence, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(fact3, doc1, chunk1, 'financial_metric', 'Company', 'Operating Profit', '2', 'USD Million', 'Operating profit stood at $2M', 0.9, now);
+
+  db.prepare(`
+    INSERT INTO facts (id, document_id, chunk_id, fact_type, subject, attribute, value, unit, raw_quote, confidence, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(fact4, doc2, chunk2, 'financial_metric', 'Company', 'Operating Profit', '1.5', 'USD Million', 'Standalone operating profit was $1.5M', 0.9, now);
+
+  // Insert mock relationships
+  const rel1 = 'mock-rel-1';
+  db.prepare(`
+    INSERT INTO relationships (id, fact_id_a, fact_id_b, relationship, reconciliation_factor, reasoning, judged_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(rel1, fact1, fact2, 'corroborates', null, 'Both state the revenue is $10M.', now);
+
+  const rel2 = 'mock-rel-2';
+  db.prepare(`
+    INSERT INTO relationships (id, fact_id_a, fact_id_b, relationship, reconciliation_factor, reasoning, judged_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(rel2, fact3, fact4, 'reconciled', 'scope', 'Doc A shows consolidated profit ($2M), while Doc B shows standalone profit ($1.5M).', now);
+
   console.log("Mock data inserted.");
 }
 

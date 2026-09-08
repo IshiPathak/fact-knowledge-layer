@@ -1,122 +1,107 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './index.css';
+import { Search, Filter } from 'lucide-react';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [relationships, setRelationships] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/relationships')
+      .then(res => res.json())
+      .then(data => setRelationships(data))
+      .catch(err => console.error('Failed to load relationships:', err));
+  }, []);
+
+  const filteredRelationships = relationships.filter(rel => {
+    const matchesSearch = (rel.a_subject?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+                          (rel.a_attribute?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                          (rel.b_subject?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchesFilter = filterType === 'all' || rel.relationship === filterType;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-container">
+      <header className="header">
+        <h1>Fact Knowledge Layer</h1>
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <main className="main-content">
+        <div className="filters-container">
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-tertiary)' }} />
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="Search by company or metric..." 
+              style={{ paddingLeft: '36px', width: '100%' }}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <select 
+            className="select-input"
+            value={filterType}
+            onChange={e => setFilterType(e.target.value)}
+          >
+            <option value="all">All Relationships</option>
+            <option value="corroborates">Corroborates</option>
+            <option value="contradicts">Contradicts</option>
+            <option value="reconciled">Reconciled</option>
+          </select>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div className="relationships-grid">
+          {filteredRelationships.length === 0 ? (
+            <p style={{ color: 'var(--text-tertiary)', textAlign: 'center', marginTop: '48px' }}>
+              No relationships found matching your criteria.
+            </p>
+          ) : (
+            filteredRelationships.map(rel => (
+              <div key={rel.id} className="relationship-card">
+                <div className="card-header">
+                  <span className={`badge ${rel.relationship}`}>
+                    {rel.relationship} {rel.reconciliation_factor ? `(${rel.reconciliation_factor})` : ''}
+                  </span>
+                  <span className="card-date">
+                    {new Date(rel.judged_at).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                <div className="card-body">
+                  <div className="fact-column">
+                    <h3>Document A</h3>
+                    <div className="fact-metric">
+                      {rel.a_subject} - {rel.a_attribute}: {rel.a_value} {rel.a_unit}
+                    </div>
+                    <div className="fact-quote">"{rel.a_quote}"</div>
+                  </div>
+                  
+                  <div className="fact-column">
+                    <h3>Document B</h3>
+                    <div className="fact-metric">
+                      {rel.b_subject} - {rel.b_attribute}: {rel.b_value} {rel.b_unit}
+                    </div>
+                    <div className="fact-quote">"{rel.b_quote}"</div>
+                  </div>
+                </div>
+                
+                {rel.reasoning && (
+                  <div className="reasoning-box">
+                    <strong>Judge Reasoning</strong>
+                    {rel.reasoning}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;

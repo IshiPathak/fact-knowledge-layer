@@ -64,8 +64,28 @@ app.get('/api/documents/:id/evidence/:chunkId', (req, res) => {
   
   res.json({
     rawText: chunk.raw_text,
-    bbox: JSON.parse(chunk.bbox)
+    bbox: chunk.bbox ? JSON.parse(chunk.bbox) : null
   });
+});
+
+// GET /api/documents
+app.get('/api/documents', (req, res) => {
+  const docs = db.prepare('SELECT * FROM documents ORDER BY uploaded_at DESC').all();
+  res.json(docs);
+});
+
+// GET /api/relationships
+app.get('/api/relationships', (req, res) => {
+  const rels = db.prepare(`
+    SELECT r.*, 
+      fa.subject as a_subject, fa.attribute as a_attribute, fa.value as a_value, fa.unit as a_unit, fa.raw_quote as a_quote,
+      fb.subject as b_subject, fb.attribute as b_attribute, fb.value as b_value, fb.unit as b_unit, fb.raw_quote as b_quote
+    FROM relationships r
+    JOIN facts fa ON r.fact_id_a = fa.id
+    JOIN facts fb ON r.fact_id_b = fb.id
+    ORDER BY r.judged_at DESC
+  `).all();
+  res.json(rels);
 });
 
 app.listen(port, () => {
