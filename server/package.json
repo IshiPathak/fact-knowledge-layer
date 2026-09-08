@@ -17,6 +17,7 @@
     "express": "^5.2.1",
     "multer": "^2.3.0",
     "p-queue": "^9.3.3",
+    "pdfjs-dist": "^3.11.174",
     "uuid": "^14.0.2"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from './db';
+import { processDocument } from './pdfParser';
 
 const app = express();
 const port = 3001;
@@ -39,10 +40,10 @@ app.post('/api/documents', upload.single('file'), (req, res) => {
   const filename = req.file.originalname;
   const uploadedAt = new Date().toISOString();
 
-  const insertStmt = db.prepare(\`
+  const insertStmt = db.prepare(`
     INSERT INTO documents (id, filename, uploaded_at, status)
     VALUES (?, ?, ?, 'pending')
-  \`);
+  `);
   
   insertStmt.run(documentId, filename, uploadedAt);
 
@@ -50,8 +51,23 @@ app.post('/api/documents', upload.single('file'), (req, res) => {
   res.json({ documentId, status: 'pending' });
 
   // Processing will be kicked off here in Phase 1
+  processDocument(documentId).catch(console.error);
+});
+
+// GET /api/documents/:id/evidence/:chunkId
+app.get('/api/documents/:id/evidence/:chunkId', (req, res) => {
+  const { id, chunkId } = req.params;
+  const chunk = db.prepare('SELECT raw_text, bbox FROM chunks WHERE document_id = ? AND id = ?').get(id, chunkId) as any;
+  if (!chunk) {
+    return res.status(404).json({ error: 'Chunk not found' });
+  }
+  
+  res.json({
+    rawText: chunk.raw_text,
+    bbox: JSON.parse(chunk.bbox)
+  });
 });
 
 app.listen(port, () => {
-  console.log(\`Server is running on http://localhost:\${port}\`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
