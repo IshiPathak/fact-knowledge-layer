@@ -23,7 +23,7 @@ async function testRetrieval() {
   
   // Create a mock second document and some mock facts for it to test retrieval
   const mockDocId = 'mock-doc-123';
-  db.prepare('INSERT OR IGNORE INTO documents (id, filename, status, processed_at) VALUES (?, ?, ?, ?)').run(mockDocId, 'mock-competitor.pdf', 'done', new Date().toISOString());
+  db.prepare('INSERT OR IGNORE INTO documents (id, filename, status, uploaded_at) VALUES (?, ?, ?, ?)').run(mockDocId, 'mock-competitor.pdf', 'done', new Date().toISOString());
   
   // We'll generate embeddings for a couple of mock facts directly
   // We need getEmbedding from embedding.ts
