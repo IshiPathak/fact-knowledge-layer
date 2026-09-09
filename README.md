@@ -88,23 +88,11 @@ npm run dev
 
 Link to a demo video of **3 minutes or less** showing a PDF being processed and the four required cases:
 
-> 🔗 **[Click Here to Watch the 3-Minute Video Walkthrough](YOUR_VIDEO_LINK_HERE)** *(Replace with your unlisted YouTube or Loom link)*
-
-### Demo Outline (< 3 Minutes):
-1. **0:00 – 0:45 | Live Upload & Ingestion**: Uploading PDFs through the UI, showing density-based chunking, verbatim quote grounding, and dynamic fact extraction.
-2. **0:45 – 1:30 | Case 1 & Case 2 (Corroboration & Contradiction)**:
-   * Filtering to **Corroborates** to showcase identical numbers across documents (e.g. ₹81,415 Mn vs ₹8,142 Cr).
-   * Filtering to **Contradicts** to showcase conflicting disclosures for the same period (e.g. 31 days vs 37 days Net Working Capital).
-3. **1:30 – 2:15 | Case 3 (Reconciled by Context)**:
-   * Filtering to **Reconciled** to showcase facts differing by structural dimensions: `time` (historical stub vs full year) or `scope` (standalone vs consolidated).
-4. **2:15 – 3:00 | Case 4 (Failure Interception & Review Queue)**:
-   * Opening the **Review Queue & Failures** tab to show how the system intercepts quote mismatches and low-confidence hallucinations before they reach downstream users.
+> 🔗 **[Click Here to Watch the 3-Minute Video Walkthrough](https://drive.google.com/file/d/1Hg1-ULlErrqIhUy9EW1NbJAjfgoREeTe/view?usp=sharing)** 
 
 ---
 
 ## 🧠 Approach
-
-Explain your approach, architecture, important decisions, trade-offs, and the AI tools you used:
 
 ### 1. Architecture & Pipeline
 
