@@ -48,72 +48,49 @@ export async function processDocument(documentId: string) {
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdfDocument.getPage(pageNum);
       const textContent = await page.getTextContent();
-      
       const items = textContent.items as TextItem[];
       
-      // Group items into chunks based on vertical distance
-      let currentChunkText = '';
-      let currentBbox: any[] = [];
-      let lastY: number | null = null;
-      let lastHeight = 0;
-      let charCount = 0;
-      let charStart = 0;
-      
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (!item.str || item.str.trim() === '') {
-          // If it's empty and we have a chunk and we hit a significant gap, we could break, but let's rely on Y distance
-          continue;
-        }
-
-        const x = item.transform[4];
-        const y = item.transform[5];
-        const height = item.transform[3]; // scaleY usually represents height
-        const width = item.width;
-
-        // Check if new paragraph
-        const isNewParagraph = lastY !== null && Math.abs(lastY - y) > lastHeight * 1.5;
-        
-        // Also if we reach > 500 characters, let's chunk to be safe, or wait for paragraph break
-        const isTooLong = currentChunkText.length > 2000; 
-
-        if ((isNewParagraph && currentChunkText.length > 50) || isTooLong) {
-          // Save current chunk
-          if (currentChunkText.trim().length > 0) {
-             insertChunk.run(
-               uuidv4(),
-               documentId,
-               pageNum,
-               charStart,
-               charStart + currentChunkText.length,
-               JSON.stringify(currentBbox),
-               currentChunkText.trim()
-             );
-          }
-          
-          charStart += currentChunkText.length;
-          currentChunkText = '';
-          currentBbox = [];
-        }
-
-        currentChunkText += item.str + ' ';
-        currentBbox.push({ x, y, width, height });
-        
-        lastY = y;
-        lastHeight = height;
+      let pageText = '';
+      let bboxes: any[] = [];
+      for (const item of items) {
+        if (!item.str || item.str.trim() === '') continue;
+        pageText += item.str + ' ';
+        bboxes.push({
+          x: item.transform[4],
+          y: item.transform[5],
+          width: item.width,
+          height: item.transform[3]
+        });
       }
-      
-      // Save last chunk
-      if (currentChunkText.trim().length > 0) {
+
+      const trimmed = pageText.trim();
+      if (trimmed.length < 30) continue; // Skip empty pages
+
+      if (trimmed.length <= 2500) {
         insertChunk.run(
           uuidv4(),
           documentId,
           pageNum,
-          charStart,
-          charStart + currentChunkText.length,
-          JSON.stringify(currentBbox),
-          currentChunkText.trim()
+          0,
+          trimmed.length,
+          JSON.stringify(bboxes.slice(0, 30)),
+          trimmed
         );
+      } else {
+        for (let start = 0; start < trimmed.length; start += 2000) {
+          const piece = trimmed.slice(start, start + 2000).trim();
+          if (piece.length > 30) {
+            insertChunk.run(
+              uuidv4(),
+              documentId,
+              pageNum,
+              start,
+              start + piece.length,
+              JSON.stringify(bboxes.slice(0, 30)),
+              piece
+            );
+          }
+        }
       }
     }
 

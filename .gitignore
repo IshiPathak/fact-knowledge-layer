@@ -1,8 +1,31 @@
+# Dependencies
 node_modules/
 dist/
+.vite/
+
+# Secrets & Environment Variables (NEVER commit real keys)
 .env
-data.sqlite
-data.sqlite-wal
-data.sqlite-shm
-uploads/
+.env.local
+.env.*
+!.env.example
+*.env
+
+# SQLite Databases & Lock Files
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+server/data.sqlite*
+data.sqlite*
+
+# Uploaded PDF Files & Cache
+uploads/*
+!uploads/.gitkeep
+
+# System & OS Files
 .DS_Store
+*.log
+npm-debug.log*
