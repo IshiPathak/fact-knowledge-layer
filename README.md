@@ -144,62 +144,24 @@ flowchart TD
 
 ### 2. The Four Required Cases
 
-#### Case 1: A Fact Corroborated Across Documents
-* **Subject & Metric**: Delhivery Limited — Consolidated Revenue from Customers (FY2023–24)
-* **Fact A (Annual Report FY24, Page 36 / Notes to Financial Statements)**:
-  * *Verbatim Source Quote*: `"Revenue from services* (₹ million) 72,236 FY23 70,536 FY22 81,415 FY24"` *(also reported as `₹81,415.38 million` in Consolidated Revenue Note)*
-  * *Extracted Value*: `81415` (Unit: `INR million`, Time Scope: `FY2024`)
-* **Fact B (Earnings Presentation Q4 FY24, Slide 6 / Key Financial Highlights)**:
-  * *Verbatim Source Quote*: `"Revenue from customers (A+B) 1,860 2,194 2,076 (5.4%) 11.6% 7,225 8,142 12.7%"`
-  * *Extracted Value*: `8142` (Unit: `INR crore`, Time Scope: `FY2024`)
-* **Relationship**: `corroborates`
-* **System Reasoning**:
-  > *"Fact A states 81,415.38 million INR and Fact B states 8,142 crore INR for the same entity and fiscal year (FY24). Since 1 crore equals 10 million, 81,415.38 million INR is mathematically equivalent to 8,141.538 crore INR, which rounds to the 8,142 crore INR reported in the executive presentation. Both sources corroborate the company's full-year topline."*
+#### Case 1: Corroboration Across Documents
+* **Metric**: Delhivery FY24 Consolidated Revenue from Customers
+* **Sources**: Annual Report FY24 (`₹81,415 Mn`) vs. Q4 Earnings Presentation (`₹8,142 Cr`)
+* **Outcome**: `corroborates` — 81,415.38 million INR equals 8,141.54 crore INR, rounding to the 8,142 crore reported in executive slides. *(Also corroborated: Express Parcel volume of 740 Mn shipments across both files).*
 
-*(Also corroborated: Express Parcel shipments of 740 million parcels in Annual Report ↔ 740 Mn shipments in Investor Presentation).*
+#### Case 2: Genuine Contradiction
+* **Metric**: Delhivery FY24 Net Working Capital (NWC) Days
+* **Sources**: Annual Report FY24 (`31 days`) vs. Q4 Earnings Presentation (`37 days`)
+* **Outcome**: `contradicts` — Both state NWC days for the close of FY24 (as of March 31, 2024), but report conflicting numbers without an explicit reconciliation note.
 
----
+#### Case 3: Reconciled by Context
+* **Metric**: Delhivery Historical Services Revenue vs. FY24 Total Revenue
+* **Sources**: Pre-IPO Prospectus 2022 (`₹46,230.56 Mn`) vs. Annual Report FY24 (`₹81,415.38 Mn`)
+* **Outcome**: `reconciled` (Factors: `time`, `scope`) — Reconciled because Fact A is a historical 9-month stub period (ended Dec 31, 2021), whereas Fact B represents full-year FY24 consolidated revenue.
 
-#### Case 2: A Genuine or Likely Contradiction
-* **Subject & Metric**: Delhivery Limited — Net Working Capital (NWC) Days (FY2023–24 / Close of FY24)
-* **Fact A (Annual Report FY24, Operational & Financial Metrics Table)**:
-  * *Verbatim Source Quote*: `"Net working capital days 73 47 37 38 31 FY20 FY21 FY22 FY23 FY24"`
-  * *Extracted Value*: `31` (Unit: `days`, Time Scope: `FY2024`)
-* **Fact B (Earnings Presentation Q4 FY24, Working Capital Slide)**:
-  * *Verbatim Source Quote*: `"Net Working Capital (Days) 106 87 74 77 66 33 40 37 39 35 Mar '20 Mar '24"`
-  * *Extracted Value*: `37` (Unit: `days`, Time Scope: `Mar '24`)
-* **Relationship**: `contradicts`
-* **System Reasoning**:
-  > *"Both disclosures report Net Working Capital days for Delhivery Limited as of the close of fiscal year 2024 (March 31, 2024 / FY24). However, the statutory Annual Report reports 31 days whereas the Q4 Earnings Presentation reports 37 days. In the absence of an explicit reconciliation schedule in the headline slides, these conflicting figures represent an analytical discrepancy across corporate reporting channels."*
-
-*(Alternative Macroeconomic Contradiction: Economic Survey FY25 Real GDP projection of 6.0% [H1 deceleration] ↔ RBI Bulletin FY25 Real GDP projection of 6.5% / 7.2%).*
-
----
-
-#### Case 3: An Apparent Contradiction Explained by Context (Reconciled)
-* **Subject & Metric**: Delhivery Limited — Historical Revenue from Services vs FY24 Annual Revenue
-* **Fact A (Prospectus 2022 Excerpt, Restated Financial Statements)**:
-  * *Verbatim Source Quote*: `"Revenue from Services 16,538.97 100.00% 27,748.25 99.79% 36,354.38 99.70% 26,350.52 99.67% 46,230.56 96.10%"`
-  * *Extracted Value*: `46230.56` (Unit: `INR million`, Time Scope: `nine months ended December 31, 2021`)
-* **Fact B (Annual Report FY24, Profit & Loss Statement)**:
-  * *Verbatim Source Quote*: `"Revenue from Operations 74,540.82 66,586.61 81,415.38 72,253.01"`
-  * *Extracted Value*: `74540.82` (Standalone) & `81415.38` (Consolidated) (Unit: `INR million`, Time Scope: `FY2024`)
-* **Relationship**: `reconciled`
-* **Reconciliation Factors**: `time` and `scope`
-* **System Reasoning**:
-  > *"Fact A and Fact B appear contradictory if treated as annual revenue figures (₹46,230M vs ₹81,415M). However, the system reconciles them because Fact A represents a historical 9-month stub period ended December 31, 2021 from the pre-IPO prospectus, whereas Fact B represents full-year FY2024. Additionally, Fact B separates Standalone (₹74,540.82M) from Consolidated (₹81,415.38M) operations."*
-
----
-
-#### Case 4: An Extraction or Reasoning Failure Handling
-* **Target Metric**: Revenue from Operations unit scaling or paraphrased quotation.
-* **Failure Observed**:
-  * LLM extraction occasionally hallucinates unit conversion directly into the quote string (e.g. converting `81,415.38 million` to `8,141.54 Crore` and claiming the raw text said `₹8,141.54 Cr`).
-* **How Our System Handled It (The Guardrail)**:
-  1. **Automated Verbatim Guardrail**: Before committing any fact to SQLite, the extractor executes a deterministic substring verification: `chunk.content.includes(fact.raw_quote)`.
-  2. **Quarantine Interception**: If the model altered or paraphrased the quote, the verification returns `false`.
-  3. **Routing to Review Queue**: The invalid fact is blocked from the `facts` table and routed to `review_queue` with failure reason `quote_mismatch` and confidence breakdown.
-  4. **User Observability**: The user can open the **"Review Queue & Failures"** tab in the UI to inspect all intercepted extractions, examine the failure details, and prevent ungrounded claims from polluting the knowledge graph.
+#### Case 4: Failure Handling & Guardrail Interception
+* **Failure**: LLM occasionally hallucinates unit conversion inside the quote string (e.g. converting `81,415.38 million` to `8,141.54 Cr` and claiming the raw text said `₹8,141.54 Cr`).
+* **System Handling**: Deterministic `chunk.content.includes(fact.raw_quote)` check flags quote mismatches in 0.01ms, quarantining ungrounded claims into the `review_queue` table and exposing them in the UI's Review Queue tab.
 
 ---
 
