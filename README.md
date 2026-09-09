@@ -99,40 +99,44 @@ Link to a demo video of **3 minutes or less** showing a PDF being processed and 
 ```mermaid
 flowchart TD
     subgraph Ingestion ["1. PDF Parsing & Chunk Density Scoring"]
-        PDF[PDF Upload] --> Parser[pdfjs-dist Text Slicer]
-        Parser --> Chunker[Chunk Engine: ~2,000 chars]
-        Chunker --> Scorer[Density Scorer: Numbers & Financial Tokens]
-        Scorer --> TopChunks[Top 25 High-Value Chunks]
+        PDF["PDF Upload"] --> Parser["pdfjs-dist Text Slicer"]
+        Parser --> Chunker["Chunk Engine: ~2,000 chars"]
+        Chunker --> Scorer["Density Scorer: Numbers & Financial Tokens"]
+        Scorer --> TopChunks["Top 25 High-Value Chunks"]
     end
 
     subgraph Extraction ["2. Fact Extraction & Verbatim Guardrails"]
-        TopChunks --> LLMExtract[LLM Extractor: Gemini / Groq]
-        LLMExtract --> Guardrail{Verbatim Quote in Chunk?}
-        Guardrail -- "MISMATCH" --> ReviewQueue[(Review Queue Table)]
-        Guardrail -- "VERIFIED" --> FactDB[(Facts SQLite Table)]
-        LLMExtract -.-> SchemaEvolution[Emergent fact_types Table]
+        TopChunks --> LLMExtract["LLM Extractor: Gemini / Groq"]
+        LLMExtract --> Guardrail{"Verbatim Quote in Chunk?"}
+        Guardrail -- "MISMATCH" --> ReviewQueue[("Review Queue Table")]
+        Guardrail -- "VERIFIED" --> FactDB[("Facts SQLite Table")]
+        LLMExtract -.-> SchemaEvolution["Emergent fact_types Table"]
     end
 
     subgraph EmbeddingRetrieval ["3. In-Process Vector Search"]
-        FactDB --> LocalEmbed[@xenova/transformers all-MiniLM-L6-v2]
-        LocalEmbed --> EmbedVector[In-Process 384-d Float32 Arrays]
-        EmbedVector --> CandidateFilter[Cross-Doc Candidate Filter]
-        CandidateFilter --> CompositeScore[Cosine Sim + Keyword Overlap]
+        FactDB --> LocalEmbed["@xenova/transformers all-MiniLM-L6-v2"]
+        LocalEmbed --> EmbedVector["In-Process 384-d Float32 Arrays"]
+        EmbedVector --> CandidateFilter["Cross-Doc Candidate Filter"]
+        CandidateFilter --> CompositeScore["Cosine Sim + Keyword Overlap"]
     end
 
     subgraph SynthesisJudge ["4. Analytical Fact Judge"]
-        CompositeScore --> TopPairs[High-Similarity Candidate Pairs]
-        TopPairs --> Judge[Analytical LLM Judge]
-        Judge --> Decision{Relationship Type}
-        Decision -->|Identical Metric| Corrob[Corroborates]
-        Decision -->|Conflicting Projection| Contrad[Contradicts]
-        Decision -->|Time/Scope/Unit Difference| Reconc[Reconciled + Factor]
-        Corrob & Contrad & Reconc --> RelDB[(Relationships SQLite)]
+        CompositeScore --> TopPairs["High-Similarity Candidate Pairs"]
+        TopPairs --> Judge["Analytical LLM Judge"]
+        Judge --> Decision{"Relationship Type"}
+        Decision -->|"Identical Metric"| Corrob["Corroborates"]
+        Decision -->|"Conflicting Projection"| Contrad["Contradicts"]
+        Decision -->|"Time/Scope/Unit Difference"| Reconc["Reconciled + Factor"]
+        Corrob --> RelDB[("Relationships SQLite")]
+        Contrad --> RelDB
+        Reconc --> RelDB
     end
 
     subgraph Interface ["5. Local Dashboard"]
-        RelDB & ReviewQueue & FactDB --> REST[Express REST API]
-        REST --> UI[React 18 + Vite Dashboard]
+        RelDB --> REST["Express REST API"]
+        ReviewQueue --> REST
+        FactDB --> REST
+        REST --> UI["React 18 + Vite Dashboard"]
     end
 ```
 
