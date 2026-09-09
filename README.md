@@ -201,19 +201,3 @@ Tell us what does not work yet and what you would build next:
    * Add a D3 / Cytoscape graph canvas visualizer showing document nodes, fact vertices, and color-coded relationship edges (`green` for corroboration, `red` for contradiction, `blue` for reconciliation).
 3. **Analyst Review Loop**:
    * Enable an interactive "Approve with Correction" action inside the Review Queue UI to re-inject human-corrected facts into the knowledge graph.
-
----
-
-## 📝 Additional Notes
-
-Add anything else you would like us to know:
-
-1. **Zero Hardcoded Mocks**:
-   * Every fact, quote, and relationship displayed in the UI is dynamically extracted, embedded, and judged at runtime from the uploaded PDFs.
-2. **Brownie Points Accomplished**:
-   * **Handling Large PDFs**: High-density chunk ranking processes 100-page filings in < 2 minutes.
-   * **Incremental Ingestion**: New documents are integrated incrementally without re-extracting prior documents.
-   * **Dynamic Schema**: Emergent `fact_types` evolve dynamically without static schemas.
-   * **Local-First Resilience**: Local embeddings ensure zero API bill shock and zero external embedding dependencies.
-3. **Credential Safety**:
-   * All API keys and databases (`.env`, `data.sqlite`) are strictly excluded in `.gitignore`.
